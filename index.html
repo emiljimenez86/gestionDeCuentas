@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="description" content="Aplicación para gestionar cuentas por cobrar y pagar">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cuentas App">
+    <title>Gestión de Cuentas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <!-- iOS specific -->
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="apple-touch-startup-image" href="screenshots/screenshot-1.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
+    <!-- External Scripts -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0ea5e9 0%, #7c3aed 100%); }
+        .card { 
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        /* Mobile menu styles */
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        /* Touch-friendly button sizes */
+        @media (max-width: 640px) {
+            button, input, select {
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4 sm:py-6">
+                <!-- Mobile Header -->
+                <div class="flex lg:hidden items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <button id="mobileMenuBtn" class="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 class="text-xl font-bold">Gestión de Cuentas</h1>
+                            <p class="text-xs opacity-90">Controla tus finanzas</p>
+                        </div>
+                    </div>
+                    <button id="installBtnMobile" class="bg-white text-primary-600 hover:bg-gray-100 px-3 py-2 rounded-full text-sm font-medium shadow-md hidden">
+                        Instalar
+                    </button>
+                </div>
+
+                <!-- Desktop Header -->
+                <div class="hidden lg:flex flex-col space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold">Gestión de Cuentas</h1>
+                            <p class="text-primary-100 opacity-90">Controla tus finanzas fácilmente</p>
+                        </div>
+                        <button id="installBtn" class="bg-white text-primary-600 hover:bg-gray-100 px-6 py-2 rounded-full font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 hidden">
+                            Instalar App
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <div class="relative group">
+                            <button id="exportBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-full text-sm font-medium flex items-center space-x-1 transition-all duration-200">
+                                <span>Exportar Datos</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div class="absolute hidden group-hover:block bg-white shadow-xl rounded-xl mt-2 py-1 w-48 z-10 overflow-hidden">
+                                <button id="exportJsonBtn" class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-secondary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Exportar a JSON</span>
+                                </button>
+                                <button id="exportExcelBtn" class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-success-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Exportar a Excel</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <label class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-full text-sm font-medium flex items-center space-x-1 cursor-pointer transition-all duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span>Importar Datos</span>
+                            <input type="file" id="importInput" class="hidden" accept=".json">
+                        </label>
+                        
+                        <button id="managePaymentsBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2.5 rounded-full text-sm font-medium flex items-center space-x-1 transition-all duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                            <span>Gestionar Abonos</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobileMenu" class="mobile-menu fixed inset-0 z-50 lg:hidden">
+            <div class="absolute inset-0 bg-black bg-opacity-50" id="mobileMenuOverlay"></div>
+            <div class="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Menú</h2>
+                        <button id="closeMobileMenu" class="p-2 rounded-lg hover:bg-gray-100">
+                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <button id="mobileExportBtn" class="w-full text-left p-4 rounded-lg hover:bg-gray-50 flex items-center space-x-3 text-gray-700">
+                            <svg class="h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Exportar Datos</span>
+                        </button>
+                        
+                        <label class="w-full text-left p-4 rounded-lg hover:bg-gray-50 flex items-center space-x-3 text-gray-700 cursor-pointer">
+                            <svg class="h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span>Importar Datos</span>
+                            <input type="file" id="mobileImportInput" class="hidden" accept=".json">
+                        </label>
+                        
+                        <button id="mobileManagePaymentsBtn" class="w-full text-left p-4 rounded-lg hover:bg-gray-50 flex items-center space-x-3 text-gray-700">
+                            <svg class="h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                            <span>Gestionar Abonos</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 container mx-auto p-4 sm:p-6 max-w-4xl">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-6 sm:mb-8">
+                <!-- Card: Cuentas por Cobrar -->
+                <div class="card p-4 sm:p-6 rounded-xl shadow-md border-t-4 border-green-500">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Cuentas por Cobrar</h2>
+                        <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm font-medium rounded-full">
+                            <span id="countCobrar">0</span> registros
+                        </span>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-bold text-green-600 mb-2">$<span id="totalCobrar">0.00</span></div>
+                    <div class="text-xs sm:text-sm text-gray-500">Total por cobrar</div>
+                </div>
+
+                <!-- Card: Cuentas por Pagar -->
+                <div class="card p-4 sm:p-6 rounded-xl shadow-md border-t-4 border-red-500">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Cuentas por Pagar</h2>
+                        <span class="px-2 sm:px-3 py-1 bg-red-100 text-red-800 text-xs sm:text-sm font-medium rounded-full">
+                            <span id="countPagar">0</span> registros
+                        </span>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-bold text-red-600 mb-2">$<span id="totalPagar">0.00</span></div>
+                    <div class="text-xs sm:text-sm text-gray-500">Total por pagar</div>
+                </div>
+            </div>
+
+            <!-- Transaction Form -->
+            <div class="card p-4 sm:p-6 rounded-2xl shadow-card mb-6 sm:mb-8">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center">
+                    <svg class="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Nueva Transacción
+                </h2>
+                
+                <form id="transactionForm" class="space-y-4 sm:space-y-5">
+                    <!-- Type Toggle -->
+                    <div class="flex rounded-xl bg-gray-50 p-1">
+                        <button type="button" id="tabCobrar" class="tab-button flex-1 py-3 px-3 sm:px-4 text-center rounded-lg transition-all duration-200 font-medium text-gray-700 hover:bg-white hover:shadow-sm text-sm sm:text-base">
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-success-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="hidden sm:inline">Cuenta por Cobrar</span>
+                                <span class="sm:hidden">Cobrar</span>
+                            </div>
+                        </button>
+                        <button type="button" id="tabPagar" class="tab-button flex-1 py-3 px-3 sm:px-4 text-center rounded-lg transition-all duration-200 font-medium text-gray-700 hover:bg-white hover:shadow-sm text-sm sm:text-base">
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-danger-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span class="hidden sm:inline">Cuenta por Pagar</span>
+                                <span class="sm:hidden">Pagar</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Form Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                            <input type="text" id="description" name="description" class="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base" required>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                    <input type="number" id="amount" name="amount" step="0.01" class="w-full pl-8 pr-3 sm:pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Vencimiento</label>
+                                <input type="date" id="dueDate" name="dueDate" class="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base" required>
+                            </div>
+                        </div>
+                        <input type="hidden" id="transactionType" name="transactionType" value="cobrar">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm sm:text-base">
+                        Agregar Transacción
+                    </button>
+                </form>
+            </div>
+
+            <!-- Transactions List -->
+            <div id="transactionsContainer" class="card p-4 sm:p-6 rounded-2xl shadow-card">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
+                        <svg class="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Transacciones
+                    </h2>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Buscar..." class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                            <svg class="h-4 w-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <div class="relative">
+                            <select id="filterType" class="w-full sm:w-auto appearance-none bg-white pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                                <option value="all">Todas</option>
+                                <option value="cobrar">Por Cobrar</option>
+                                <option value="pagar">Por Pagar</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-8 sm:py-12 px-4">
+                    <div class="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <svg class="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-1">No hay transacciones</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Comienza agregando tu primera transacción</p>
+                </div>
+                
+                <!-- Transactions List -->
+                <div id="transactionsList" class="space-y-3">
+                    <!-- Transactions will be added here dynamically -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // Handle PWA installation
+        let deferredPrompt;
+        const installButton = document.getElementById('installBtn');
+        const installButtonMobile = document.getElementById('installBtnMobile');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installButton) installButton.classList.remove('hidden');
+            if (installButtonMobile) installButtonMobile.classList.remove('hidden');
+            
+            const handleInstall = () => {
+                if (installButton) installButton.classList.add('hidden');
+                if (installButtonMobile) installButtonMobile.classList.add('hidden');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            };
+            
+            if (installButton) installButton.addEventListener('click', handleInstall);
+            if (installButtonMobile) installButtonMobile.addEventListener('click', handleInstall);
+        });
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMobileMenu = document.getElementById('closeMobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenuFunc() {
+            mobileMenu.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+        if (closeMobileMenu) closeMobileMenu.addEventListener('click', closeMobileMenuFunc);
+        if (mobileMenuOverlay) mobileMenuOverlay.addEventListener('click', closeMobileMenuFunc);
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeMobileMenuFunc();
+            }
+        });
+    </script>
+</body>
+</html>
