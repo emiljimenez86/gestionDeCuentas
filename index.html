@@ -308,45 +308,131 @@
 
     <script src="app.js"></script>
     <script>
+        // PWA Installation and Service Worker Management
+        let deferredPrompt;
+        let swRegistration;
+        const installButton = document.getElementById('installBtn');
+        const installButtonMobile = document.getElementById('installBtnMobile');
+
         // Register Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
+            window.addEventListener('load', async () => {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('./sw.js');
+                    console.log('ServiceWorker registration successful:', swRegistration);
+                    
+                    // Check for updates
+                    swRegistration.addEventListener('updatefound', () => {
+                        const newWorker = swRegistration.installing;
+                        console.log('Service Worker update found!');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New version available
+                                showUpdateNotification();
+                            }
+                        });
                     });
+                    
+                    // Handle service worker updates
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log('New service worker activated');
+                        window.location.reload();
+                    });
+                    
+                } catch (err) {
+                    console.error('ServiceWorker registration failed:', err);
+                }
             });
         }
 
-        // Handle PWA installation
-        let deferredPrompt;
-        const installButton = document.getElementById('installBtn');
-        const installButtonMobile = document.getElementById('installBtnMobile');
-        
+        // Handle PWA installation prompt
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('Install prompt triggered');
             e.preventDefault();
             deferredPrompt = e;
-            if (installButton) installButton.classList.remove('hidden');
-            if (installButtonMobile) installButtonMobile.classList.remove('hidden');
             
-            const handleInstall = () => {
+            // Show install buttons
+            if (installButton) {
+                installButton.classList.remove('hidden');
+                installButton.addEventListener('click', handleInstall);
+            }
+            if (installButtonMobile) {
+                installButtonMobile.classList.remove('hidden');
+                installButtonMobile.addEventListener('click', handleInstall);
+            }
+        });
+
+        // Handle install button click
+        function handleInstall() {
+            if (!deferredPrompt) return;
+            
+            // Hide install buttons
+            if (installButton) installButton.classList.add('hidden');
+            if (installButtonMobile) installButtonMobile.classList.add('hidden');
+            
+            // Show the install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    showNotification('✅ Aplicación instalada correctamente', 'success');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        // Handle successful installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed');
+            showNotification('🎉 ¡Aplicación instalada exitosamente!', 'success');
+            
+            // Hide install buttons
+            if (installButton) installButton.classList.add('hidden');
+            if (installButtonMobile) installButtonMobile.classList.add('hidden');
+        });
+
+        // Show update notification
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-3';
+            notification.innerHTML = `
+                <span>🔄 Nueva versión disponible</span>
+                <button onclick="updateApp()" class="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-gray-100">
+                    Actualizar
+                </button>
+                <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200">
+                    ✕
+                </button>
+            `;
+            document.body.appendChild(notification);
+        }
+
+        // Update app function
+        window.updateApp = function() {
+            if (swRegistration && swRegistration.waiting) {
+                // Send message to waiting service worker
+                swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+        };
+
+        // Check if app is already installed
+        function checkIfAppIsInstalled() {
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                console.log('App is running in standalone mode');
+                // Hide install buttons if already installed
                 if (installButton) installButton.classList.add('hidden');
                 if (installButtonMobile) installButtonMobile.classList.add('hidden');
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            };
-            
-            if (installButton) installButton.addEventListener('click', handleInstall);
-            if (installButtonMobile) installButtonMobile.addEventListener('click', handleInstall);
-        });
+            }
+        }
+
+        // Check installation status on load
+        checkIfAppIsInstalled();
 
         // Mobile menu functionality
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');

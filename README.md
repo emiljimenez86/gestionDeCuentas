@@ -24,6 +24,13 @@ Una aplicación web progresiva (PWA) para gestionar cuentas por cobrar y pagar, 
   - Exportación de reportes en CSV
   - Seguimiento de saldos pendientes en tiempo real
 
+### 📱 **PWA (Progressive Web App)**
+- **Instalación Nativa**: Instálala como aplicación en tu dispositivo
+- **Funcionamiento Offline**: Funciona sin conexión a internet
+- **Actualizaciones Automáticas**: Se actualiza automáticamente
+- **Notificaciones Push**: Preparado para notificaciones futuras
+- **Experiencia Nativa**: Se ve y funciona como una app nativa
+
 ### 📊 **Dashboard Inteligente**
 - Resumen visual de cuentas por cobrar y pagar
 - Contadores de transacciones

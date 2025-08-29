@@ -1,62 +1,73 @@
 {
-  "name": "Gestión de Cuentas",
+  "name": "Gestión de Cuentas - CxC CxP",
   "short_name": "Cuentas App",
-  "description": "Aplicación para gestionar cuentas por cobrar y pagar",
-  "start_url": "/",
+  "description": "Aplicación completa para gestionar cuentas por cobrar y pagar con sistema de abonos y cuotas bancarias",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
-  "orientation": "portrait",
+  "background_color": "#0ea5e9",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "business", "productivity"],
+  "lang": "es",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png"
+      "src": "./favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
     },
     {
-      "src": "icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-192x192.png",
+      "src": "./image/Foto.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512x512.png",
+      "src": "./image/Foto.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "splash_pages": null,
+  "shortcuts": [
+    {
+      "name": "Nueva Transacción",
+      "short_name": "Nueva",
+      "description": "Agregar una nueva transacción",
+      "url": "./?action=new",
+      "icons": [
+        {
+          "src": "./image/Foto.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Ver Resumen",
+      "short_name": "Resumen",
+      "description": "Ver resumen de cuentas",
+      "url": "./?action=summary",
+      "icons": [
+        {
+          "src": "./image/Foto.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
   "screenshots": [
     {
-      "src": "screenshots/screenshot-1.png",
-      "sizes": "1080x1920",
+      "src": "./image/Foto.png",
+      "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "wide",
+      "label": "Vista principal de la aplicación"
     }
-  ]
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
